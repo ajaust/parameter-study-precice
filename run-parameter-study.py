@@ -152,8 +152,7 @@ def start_solver(solver_parameters: pp.SolverParameters):
             executable_path=solver_parameters.executable_path,
             executable_name=solver_parameters.executable_name,
         ),
-        "-c",
-        "precice-config.xml",
+        *solver_cmd_line,
     ]
     print(*full_cmd_line)
     proc = sp.Popen(

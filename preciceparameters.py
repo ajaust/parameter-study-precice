@@ -16,10 +16,11 @@ class SolverMPIParameters():
 
 class SolverParameters():
 
-    def __init__(self, name: str, executable_name: str, executable_path: str = "", mpi_parameters: SolverMPIParameters = None ):
+    def __init__(self, name: str, executable_name: str, executable_path: str = "", solver_cmd_line: list=None, mpi_parameters: SolverMPIParameters = None ):
         self.name = name
         self.executable_name = executable_name
         self.executable_path = executable_path
+        self.solver_parameters = solver_parameters
         self.mpi_parameters = mpi_parameters
 
     def get_name(self) -> str:
@@ -29,7 +30,10 @@ class SolverParameters():
         return self.executable_name
 
     def get_executable_path(self) -> str:
-        return executable_path
+        return self.executable_path
+
+    def get_solver_cmd_line(self) -> list:
+        return self.solver_cmd_line
 
     def to_string(self) -> str:
         return "Solver: {0}\n  Executable: {1}\n  Executable path: {2}".format( self.name, self.executable_name, self.executable_path )
