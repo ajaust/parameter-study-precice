@@ -118,14 +118,13 @@ for ct in coupling_types:
                     )
 
 
-
 def move_to_dir(target_dir, expr):
     for to_move in glob.glob(expr):
         print(to_move)
         try:
             shutil.move(to_move, target_dir)
         except:
-            print("Failed to move {} to {}".format(to_move, target_dir) )
+            print("Failed to move {} to {}".format(to_move, target_dir))
 
 
 def copy_to_dir(target_dir, expr):
@@ -134,7 +133,7 @@ def copy_to_dir(target_dir, expr):
         try:
             shutil.copy(to_copy, target_dir)
         except:
-            print("Failed to copy {} to {}".format(to_copy, target_dir) )
+            print("Failed to copy {} to {}".format(to_copy, target_dir))
 
 
 def start_solver(solver_parameters: pp.SolverParameters):
@@ -147,16 +146,16 @@ def start_solver(solver_parameters: pp.SolverParameters):
         mpi_params = ["mpirun", *solver_parameters.mpi_parameters.extra_options_list]
 
     full_cmd_line = [
-            "time",
-            *mpi_params,
-            "{executable_path}/{executable_name}".format(
-                executable_path=solver_parameters.executable_path,
-                executable_name=solver_parameters.executable_name,
-            ),
-            "-c",
-            "precice-config.xml",
-        ]
-    print( *full_cmd_line )
+        "time",
+        *mpi_params,
+        "{executable_path}/{executable_name}".format(
+            executable_path=solver_parameters.executable_path,
+            executable_name=solver_parameters.executable_name,
+        ),
+        "-c",
+        "precice-config.xml",
+    ]
+    print(*full_cmd_line)
     proc = sp.Popen(
         full_cmd_line,
         stdout=f,
@@ -164,24 +163,7 @@ def start_solver(solver_parameters: pp.SolverParameters):
         preexec_fn=os.setpgrp,
     )
 
-    # proc = sp.Popen(["time", "mpirun", "--map-by", "core", "--report-bindings", "-n", str(nthreads_biot), "python3", "./biot_solver.py", "-c", "precice-config.xml"], stdout=f, stderr=f, preexec_fn=os.setpgrp)
     return [proc, f]
-
-
-# def run_biot_solver():
-#    print( "Starting Biot solver" )
-#    f = open("biot_solver.log", 'w')
-##    proc = sp.Popen(["time", "mpirun", "--report-bindings", "-n", str(nthreads_biot), "python3", "./biot_solver.py", "-c", "precice-config.xml"], stdout=f, stderr=f, preexec_fn=os.setpgrp)
-##    proc = sp.Popen(["time", "mpirun", "--bind-to", "hwthread", "--report-bindings", "-n", str(nthreads_biot), "python3", "./biot_solver.py", "-c", "precice-config.xml"], stdout=f, stderr=f, preexec_fn=os.setpgrp)
-#    proc = sp.Popen(["time", "mpirun", "--map-by", "core", "--report-bindings", "-n", str(nthreads_biot), "python3", "./biot_solver.py", "-c", "precice-config.xml"], stdout=f, stderr=f, preexec_fn=os.setpgrp)
-##    proc = sp.Popen(["time", "mpirun", "--map-by", "hwthread", "--bind-to", "hwthread", "--report-bindings", "-n", str(nthreads_biot), "python3", "./biot_solver.py", "-c", "precice-config.xml"], stdout=f, stderr=f, preexec_fn=os.setpgrp)
-#    return proc, f
-
-# def run_flow_solver():
-#    print( "Starting Flow solver" )
-#    f = open("flow_solver.log", 'w')
-#    proc = sp.Popen(["time", "mpirun", "-n", str(nthreads_flow), "python3", "./flow_solver.py", "-c", "precice-config.xml"], stdout=f, stderr=f, preexec_fn=os.setpgrp)
-#    return proc, f
 
 
 print("Number of test configurations to run: \n {}".format(len(testcases)))
@@ -231,33 +213,21 @@ for key in testcases:
         testcase, "precice-config.xml", is_serial_implicit
     )
 
-
     solver_start_times = {}
     solver_walltimes = {}
     solver_proc_and_file_ptr = {}
 
     for solver in config.solvers:
-        print( solver.get_name() )
+        print(solver.get_name())
         solver_start_times[solver] = timer()
-        solver_proc_and_file_ptr[solver] = start_solver( solver )
+        solver_proc_and_file_ptr[solver] = start_solver(solver)
 
-
-
-
-    # Start thread for Biot solver in background
-    #biot_time_start = timer()
-    #biot_proc, biot_output = run_biot_solver()
-
-    # Start thread for flow solver in background
-    #flow_time_start = timer()
-    #flow_proc, flow_output = run_flow_solver()
-
-    def wait_for_solver( solver, solver_walltimes, timeout ):
-        print( "Checking on {}".format(solver.get_name()) )
+    def wait_for_solver(solver, solver_walltimes, timeout):
+        print("Checking on {}".format(solver.get_name()))
         proc = solver_proc_and_file_ptr[solver][0]
         try:
             proc.wait(timeout=timeout)
-            #biot_proc.wait(timeout=proc_timeout)
+            # biot_proc.wait(timeout=proc_timeout)
         except sp.TimeoutExpired:
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
 
@@ -265,105 +235,29 @@ for key in testcases:
 
         return solver_walltimes
 
-
-    def wait_for_solvers( solvers, solver_walltimes, timeout ):
+    def wait_for_solvers(solvers, solver_walltimes, timeout):
         for solver in solvers:
-            solver_walltimes = wait_for_solver( solver, solver_walltimes, timeout)
+            solver_walltimes = wait_for_solver(solver, solver_walltimes, timeout)
         return solver_walltimes
 
     first_solver, *remaining_solvers = config.solvers
-    print( first_solver, remaining_solvers)
+    print(first_solver, remaining_solvers)
     # First solver we check on gets full timeout period. All other solver we check afterwards will
     # has 10 seconds of time to terminate before we kill it.
-    solver_walltimes = wait_for_solver( first_solver, solver_walltimes, proc_timeout )
-    solver_walltimes = wait_for_solvers( remaining_solvers, solver_walltimes, 10 )
+    solver_walltimes = wait_for_solver(first_solver, solver_walltimes, proc_timeout)
+    solver_walltimes = wait_for_solvers(remaining_solvers, solver_walltimes, 10)
 
-
-#    first_solver, *remaining_solver = config.solvers
-#    print( "Checking on {}".format(first_solver.get_name()) )
-#    proc = solver_proc_and_file_ptr[first_solver][0]
-#    try:
-#        proc.wait(timeout=proc_timeout)
-#        #biot_proc.wait(timeout=proc_timeout)
-#    except sp.TimeoutExpired:
-#        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-#
-#    solver_walltimes[first_solver] = timer() - solver_start_times[first_solver]
-#
-#    for solver in remaining_solver:
-#        print( "Checking on {}".format(solver.get_name()) )
-#        proc = solver_proc_and_file_ptr[solver][0]
-#        try:
-#            proc.wait(timeout=10)
-#            #biot_proc.wait(timeout=proc_timeout)
-#        except sp.TimeoutExpired:
-#            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-#
-#        solver_walltimes[solver] = timer() - solver_start_times[solver]
-
-
-#    try:
-#        biot_proc.wait(timeout=proc_timeout)
-#    except sp.TimeoutExpired:
-#        os.killpg(os.getpgid(biot_proc.pid), signal.SIGTERM)
-#
-#    # biot_proc.wait()
-#    biot_run_time = timer() - biot_time_start
-#
-#    try:
-#        flow_proc.wait(timeout=10)
-#    except sp.TimeoutExpired:
-#        os.killpg(os.getpgid(flow_proc.pid), signal.SIGTERM)
-#
-#    # flow_proc.wait()
-#    flow_run_time = timer() - flow_time_start
-
-    # print( "Runtime: {}".format( biot_run_time ) )
-
-
-#    print( solver_walltimes )
-#    print( solver_walltimes.values() )
-#    print( min(solver_walltimes.values()), max( solver_walltimes.values() ) )
     with open("timings.txt", "a+") as timings_file:
         timings_file.write(
             "{case},{min},{max}\n".format(
-                case=key, min=min(solver_walltimes.values()), max=max(solver_walltimes.values())
+                case=key,
+                min=min(solver_walltimes.values()),
+                max=max(solver_walltimes.values()),
             )
         )
 
     for f in config.files_and_directories_to_copy:
-        copy_to_dir( target_dir, f )
-#        shutil.copy(
-#            f,
-#            "{dir}/".format(
-#                dir=compact_results_dir
-#            )
-#        )
+        copy_to_dir(target_dir, f)
 
     for f in config.files_and_directories_to_move:
-        move_to_dir( target_dir, f )
-#        shutil.move(
-#            f,
-#            "{dir}/".format(
-#                dir=compact_results_dir
-#            )
-#        )
-
-    shutil.copy(
-        "precice-BiotSolver-iterations.log"print("Could not move res_flow/"),
-        "{dir}/{name}".format(
-            dir=compact_results_dir, name="{}-it-Biot.log".format(key)
-        ),
-    )
-    shutil.copy(
-        "precice-BiotSolver-convergence.log",
-        "{dir}/{name}".format(
-            dir=compact_results_dir, name="{}-conv-Biot.log".format(key)
-        ),
-    )
-    shutil.copy(
-        "precice-HDFlowSolver-iterations.log",
-        "{dir}/{name}".format(
-            dir=compact_results_dir, name="{}-it-Flow.log".format(key)
-        ),
-    )
+        move_to_dir(target_dir, f)
