@@ -70,15 +70,9 @@ class TestCase:
         self.imvj_restart_mode = IMVJRestartMode.RS_SVD
         self.svd_truncation_threshold = svd_truncation_threshold
         if svd_truncation_threshold == None:
-            assert (
-                self.accelerator == AcceleratorType.IQN_ILS,
-                "SVD Trunction value is set, but using IQN-ILS accelerator!",
-            )
+            assert self.accelerator == AcceleratorType.IQN_ILS, "SVD Trunction value is set, but using IQN-ILS accelerator!"
 
-        assert (
-            self.imvj_restart_mode == IMVJRestartMode.RS_SVD,
-            "Only rs-svd restart mode is supported at the moment!",
-        )
+        assert self.imvj_restart_mode == IMVJRestartMode.RS_SVD, "Only rs-svd restart mode is supported at the moment!"
 
     def to_string(self):
         return "  Name: {0},\n  End time: {1},\n  dt: {2},\n  Initial relaxation: {3},\n  Accelerator: {4},\n  Filter type: {5},\n  Filter limit: {6},\n  Time windows reused: {7},\n  SVD truncation threshold: {8}".format(
@@ -98,9 +92,9 @@ class TestCase:
 
 <precice-configuration>
   <log>
-    <sink type="stream" output="stdout"  filter= "(%Severity% > debug) or (%Severity% >= trace and %Module% contains SolverInterfaceImpl)"  enabled="false" /> 
-    <sink type="stream" output="stdout"  enabled="false" /> 
-  </log> 
+    <sink type="stream" output="stdout"  filter= "(%Severity% > debug) or (%Severity% >= trace and %Module% contains SolverInterfaceImpl)"  enabled="false" />
+    <sink type="stream" output="stdout"  enabled="false" />
+  </log>
 
   <solver-interface dimensions="3">
 
@@ -121,7 +115,7 @@ class TestCase:
       <use-data name="Pressure" />
       <use-data name="Displacement" />
     </mesh>
-    
+
     <mesh name="FractureMeshBottom">
       <use-data name="Pressure" />
       <use-data name="Displacement" />
@@ -138,10 +132,10 @@ class TestCase:
       <read-data name="Displacement" mesh="HDFlowMeshTop"/>
       <read-data name="Displacement" mesh="HDFlowMeshBottom"/>
 
-      <mapping:nearest-neighbor direction="read" from="FractureMeshTop" to="HDFlowMeshTop" constraint="consistent" timing="initial"/> 
-      <mapping:nearest-neighbor direction="read" from="FractureMeshBottom" to="HDFlowMeshBottom" constraint="consistent" timing="initial"/> 
+      <mapping:nearest-neighbor direction="read" from="FractureMeshTop" to="HDFlowMeshTop" constraint="consistent" timing="initial"/>
+      <mapping:nearest-neighbor direction="read" from="FractureMeshBottom" to="HDFlowMeshBottom" constraint="consistent" timing="initial"/>
 
-      <master:mpi-single/>   
+      <master:mpi-single/>
 
     </participant>
 
@@ -161,11 +155,11 @@ class TestCase:
       <mapping:nearest-neighbor direction="read" from="HDFlowMeshBottom" to="FractureMeshBottom" constraint="consistent" timing="initial"/>
       <mapping:nearest-neighbor direction="read" from="HDFlowMeshTop" to="FractureMeshTop" constraint="consistent" timing="initial"/>
 
-      <master:mpi-single/>   
+      <master:mpi-single/>
     </participant>
 
     <m2n:sockets from="HDFlowSolver" to="BiotSolver" exchange-directory="." />
-    
+
     <coupling-scheme:{COUPLING_TYPE}>
         <participants first="HDFlowSolver" second="BiotSolver"/>
         <max-time value="{MAX_TIME}"/>
@@ -182,8 +176,8 @@ class TestCase:
         <relative-convergence-measure limit="1e-3" data="Pressure" mesh="HDFlowMeshBottom" strict="1"/>
         <relative-convergence-measure limit="1e-3" data="Displacement" mesh="FractureMeshTop" strict="1"/>
         <relative-convergence-measure limit="1e-3" data="Displacement" mesh="FractureMeshBottom" strict="1"/>
-        
-        <extrapolation-order value="0"/>    
+
+        <extrapolation-order value="0"/>
     """.format(
             COUPLING_TYPE=self.coupling_type.value,
             MAX_TIME=self.max_time,
@@ -217,8 +211,8 @@ class TestCase:
         if self.coupling_type == CouplingType.SERIAL_IMPLICIT:
             accelerator_string = """
         <acceleration:{ACCELERATOR_TYPE}>
-          <data name="Displacement" mesh="FractureMeshTop"/> 
-          <data name="Displacement" mesh="FractureMeshBottom"/> 
+          <data name="Displacement" mesh="FractureMeshTop"/>
+          <data name="Displacement" mesh="FractureMeshBottom"/>
 
           <initial-relaxation value="{INITIAL_RELAXATION}"/>
           <max-used-iterations value="10000"/>
@@ -240,11 +234,11 @@ class TestCase:
         elif self.coupling_type == CouplingType.PARALLEL_IMPLICIT:
             accelerator_string = """
         <acceleration:{ACCELERATOR_TYPE}>
-          <data name="Displacement" mesh="FractureMeshTop"/> 
-          <data name="Displacement" mesh="FractureMeshBottom"/> 
-          <data name="Pressure" mesh="HDFlowMeshTop"/> 
+          <data name="Displacement" mesh="FractureMeshTop"/>
+          <data name="Displacement" mesh="FractureMeshBottom"/>
+          <data name="Pressure" mesh="HDFlowMeshTop"/>
           <data name="Pressure" mesh="HDFlowMeshBottom"/> 1
-           
+
           <initial-relaxation value="{INITIAL_RELAXATION}"/>
           <max-used-iterations value="10000"/>
           <time-windows-reused value="{TIME_WINDOWS_REUSED}"/>

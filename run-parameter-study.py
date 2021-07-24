@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import testsuite as ts
+import preciceparameters as pp
 import subprocess as sp
 #from multiprocessing import Process, Queue
 import tempfile
@@ -11,6 +11,13 @@ import glob
 from timeit import default_timer as timer
 
 import config
+
+for k, dk in config.parameter_study_parameters.items():
+    for x in dk:
+        #print( k, dk, x )
+        print(x)
+        # whatever with k, x
+
 
 #import CouplingType as ct
 #
@@ -23,10 +30,10 @@ proc_timeout = 400000
 nthreads_biot=64
 nthreads_flow=12
 
-accelerator_type = ts.AcceleratorType.IQN_ILS
-coupling_types = [ ts.CouplingType.SERIAL_IMPLICIT ]
+accelerator_type = pp.AcceleratorType.IQN_ILS
+coupling_types = [ pp.CouplingType.SERIAL_IMPLICIT ]
 
-filters_and_limits = [ ( ts.FilterType.QR2, 1e-3 ) ]
+filters_and_limits = [ ( pp.FilterType.QR2, 1e-3 ) ]
 
 
 #svd_truncation_thresholds = [1e-3, 1e-2, 1e-1, 1e0]
@@ -43,9 +50,9 @@ is_serial_implicit = False
 
 def get_filter_type( filter ):
     if filter == "QR1":
-        return ts.FilterType.QR1
+        return pp.FilterType.QR1
     elif filter == "QR2":
-        return ts.FilterType.QR2
+        return pp.FilterType.QR2
     else:
         raise "Wrong filter type specified!"
 
@@ -55,16 +62,16 @@ for ct in coupling_types:
     for filter_type, filter_limit in filters_and_limits:
         print( "{} {}".format( filter_type.name, filter_limit ) )
         for initial_relaxation in initial_relaxations:
-            if accelerator_type == ts.AcceleratorType.IQN_ILS:
+            if accelerator_type == pp.AcceleratorType.IQN_ILS:
                 for timewindow_reuse in iqn_timewindow_reuse:
                     hashname = "{}_".format( ct.value ) + "{}_".format( accelerator_type.value ) + filter_type.name + "_" + str(filter_limit) + "_reuse_" + str(timewindow_reuse) + "_relax_" + str(initial_relaxation)
                     print(hashname)
-                    testcases[hashname] = ts.TestCase( accelerator_type.value, end_time, time_step_size, initial_relaxation, ct, accelerator_type, filter_type, filter_limit, timewindow_reuse )
-            elif accelerator_type == ts.AcceleratorType.IQN_IMVJ:
+                    testcases[hashname] = pp.TestCase( accelerator_type.value, end_time, time_step_size, initial_relaxation, ct, accelerator_type, filter_type, filter_limit, timewindow_reuse )
+            elif accelerator_type == pp.AcceleratorType.IQN_IMVJ:
                 for truncation_threshold in svd_truncation_thresholds:
                     hashname = "{}_".format( ct.value ) + "{}_".format( accelerator_type.value ) + filter_type.name + "_" + str(filter_limit) + "_threshold_" + str(truncation_threshold) + "_relax_" + str(initial_relaxation)
                     print(hashname)
-                    testcases[hashname] = ts.TestCase( accelerator_type.value, end_time, time_step_size, initial_relaxation, ct, accelerator_type, filter_type, filter_limit, 0, truncation_threshold )
+                    testcases[hashname] = pp.TestCase( accelerator_type.value, end_time, time_step_size, initial_relaxation, ct, accelerator_type, filter_type, filter_limit, 0, truncation_threshold )
 
 def preq_is_good():
 
@@ -147,7 +154,7 @@ for key in testcases:
             continue
 
     #Setup precice configpreexec_fn=os.setpgrp
-    ts.write_precice_configuration_file( testcase, "precice-config.xml", is_serial_implicit )
+    pp.write_precice_configuration_file( testcase, "precice-config.xml", is_serial_implicit )
 
     # Start thread for Biot solver in background
     biot_time_start = timer()
