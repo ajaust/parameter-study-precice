@@ -1,24 +1,29 @@
 from enum import Enum
 
+
 class Error:
-    def __init__( self, n_elements= -1 ):
+    def __init__(self, n_elements=-1):
         self.n_elements = n_elements
-        self.u = -1.
-        self.sig = -1.
-        self.lam = -1.
+        self.u = -1.0
+        self.sig = -1.0
+        self.lam = -1.0
 
     def to_string(self):
-        return "(Elements: {0}, Error u: {1}, Error sigma: {2}, Error lambda: {3})".format(self.n_elements, self.u, self.sig, self.lam)
-        
+        return (
+            "(Elements: {0}, Error u: {1}, Error sigma: {2}, Error lambda: {3})".format(
+                self.n_elements, self.u, self.sig, self.lam
+            )
+        )
+
 
 class AcceleratorType(Enum):
     IQN_ILS = "IQN-ILS"
     IQN_IMVJ = "IQN-IMVJ"
 
+
 class FilterType(Enum):
     QR1 = "QR1"
     QR2 = "QR2"
-
 
 
 class IMVJRestartMode(Enum):
@@ -35,8 +40,21 @@ class CouplingType(Enum):
     PARALLEL_EXPLICIT = "parallel-explicit"
     PARALLEL_IMPLICIT = "parallel-implicit"
 
+
 class TestCase:
-    def __init__( self, name, max_time, time_step_size, initial_relaxation, coupling_type, accelerator = AcceleratorType.IQN_ILS, filter_type = FilterType.QR1, filter_limit = "1e-5", time_windows_reused = 0, svd_truncation_threshold=None ):
+    def __init__(
+        self,
+        name,
+        max_time,
+        time_step_size,
+        initial_relaxation,
+        coupling_type,
+        accelerator=AcceleratorType.IQN_ILS,
+        filter_type=FilterType.QR1,
+        filter_limit="1e-5",
+        time_windows_reused=0,
+        svd_truncation_threshold=None,
+    ):
         self.name = name
 
         self.max_time = max_time
@@ -51,14 +69,29 @@ class TestCase:
 
         self.imvj_restart_mode = IMVJRestartMode.RS_SVD
         self.svd_truncation_threshold = svd_truncation_threshold
-        if ( svd_truncation_threshold == None ):
-            assert( self.accelerator == AcceleratorType.IQN_ILS, "SVD Trunction value is set, but using IQN-ILS accelerator!" ) 
+        if svd_truncation_threshold == None:
+            assert (
+                self.accelerator == AcceleratorType.IQN_ILS,
+                "SVD Trunction value is set, but using IQN-ILS accelerator!",
+            )
 
-        assert( self.imvj_restart_mode == IMVJRestartMode.RS_SVD, "Only rs-svd restart mode is supported at the moment!")
-       
+        assert (
+            self.imvj_restart_mode == IMVJRestartMode.RS_SVD,
+            "Only rs-svd restart mode is supported at the moment!",
+        )
 
     def to_string(self):
-        return "  Name: {0},\n  End time: {1},\n  dt: {2},\n  Initial relaxation: {3},\n  Accelerator: {4},\n  Filter type: {5},\n  Filter limit: {6},\n  Time windows reused: {7},\n  SVD truncation threshold: {8}".format(self.name, self.max_time, self.time_step_size, self.initial_relaxation, self.accelerator.name, self.filter_type.name, self.filter_limit, self.time_windows_reused, self.svd_truncation_threshold )
+        return "  Name: {0},\n  End time: {1},\n  dt: {2},\n  Initial relaxation: {3},\n  Accelerator: {4},\n  Filter type: {5},\n  Filter limit: {6},\n  Time windows reused: {7},\n  SVD truncation threshold: {8}".format(
+            self.name,
+            self.max_time,
+            self.time_step_size,
+            self.initial_relaxation,
+            self.accelerator.name,
+            self.filter_type.name,
+            self.filter_limit,
+            self.time_windows_reused,
+            self.svd_truncation_threshold,
+        )
 
     def get_config_header(self):
         return """<?xml version="1.0"?>
@@ -151,7 +184,11 @@ class TestCase:
         <relative-convergence-measure limit="1e-3" data="Displacement" mesh="FractureMeshBottom" strict="1"/>
         
         <extrapolation-order value="0"/>    
-    """.format( COUPLING_TYPE = self.coupling_type.value, MAX_TIME = self.max_time, TIME_STEP_SIZE = self.time_step_size )
+    """.format(
+            COUPLING_TYPE=self.coupling_type.value,
+            MAX_TIME=self.max_time,
+            TIME_STEP_SIZE=self.time_step_size,
+        )
 
     def set_up_acceleration(self):
         accelerator_string = ""
@@ -160,19 +197,25 @@ class TestCase:
         if self.accelerator == AcceleratorType.IQN_ILS:
             accelerator_setup_str = ""
         elif self.accelerator == AcceleratorType.IQN_IMVJ:
-            accelerator_setup_str = """<imvj-restart-mode type="RS-SVD" truncation-threshold="{TRUNCATION_THRESHOLD}" chunk-size="8" />""".format( TRUNCATION_THRESHOLD = self.svd_truncation_threshold )
+            accelerator_setup_str = """<imvj-restart-mode type="RS-SVD" truncation-threshold="{TRUNCATION_THRESHOLD}" chunk-size="8" />""".format(
+                TRUNCATION_THRESHOLD=self.svd_truncation_threshold
+            )
 
-        preconditioner_setup_str = """<preconditioner type="residual-sum" freeze-after="1"/>"""
-        #if self.accelerator == AcceleratorType.IQN_IMVJ:
+        preconditioner_setup_str = (
+            """<preconditioner type="residual-sum" freeze-after="1"/>"""
+        )
+        # if self.accelerator == AcceleratorType.IQN_IMVJ:
         #    preconditioner_setup_str = """<preconditioner type="residual-sum" freeze-after="1"  />"""
 
-        if (self.accelerator == AcceleratorType.IQN_ILS) and (self.coupling_type == CouplingType.PARALLEL_IMPLICIT):
-        #    preconditioner_setup_str = """<preconditioner type="residual-sum" freeze-after="1"  />"""
-            preconditioner_setup_str = """<preconditioner type="value"/>"""            
-            #preconditioner_setup_str = """<preconditioner type="constant"/>"""
+        if (self.accelerator == AcceleratorType.IQN_ILS) and (
+            self.coupling_type == CouplingType.PARALLEL_IMPLICIT
+        ):
+            #    preconditioner_setup_str = """<preconditioner type="residual-sum" freeze-after="1"  />"""
+            preconditioner_setup_str = """<preconditioner type="value"/>"""
+            # preconditioner_setup_str = """<preconditioner type="constant"/>"""
 
         if self.coupling_type == CouplingType.SERIAL_IMPLICIT:
-            accelerator_string =  """
+            accelerator_string = """
         <acceleration:{ACCELERATOR_TYPE}>
           <data name="Displacement" mesh="FractureMeshTop"/> 
           <data name="Displacement" mesh="FractureMeshBottom"/> 
@@ -185,16 +228,16 @@ class TestCase:
           <filter type="{FILTER_TYPE}" limit="{FILTER_LIMIT}"/>
 
           {ACCELERATOR_SETUP_STRING}
-        </acceleration:{ACCELERATOR_TYPE}>""".format( 
-            ACCELERATOR_TYPE=self.accelerator.value, 
-            INITIAL_RELAXATION = self.initial_relaxation, 
-            TIME_WINDOWS_REUSED = self.time_windows_reused, 
-            PRECONDITIONER = preconditioner_setup_str,
-            FILTER_TYPE = self.filter_type.value, 
-            FILTER_LIMIT = self.filter_limit,
-            ACCELERATOR_SETUP_STRING = accelerator_setup_str
+        </acceleration:{ACCELERATOR_TYPE}>""".format(
+                ACCELERATOR_TYPE=self.accelerator.value,
+                INITIAL_RELAXATION=self.initial_relaxation,
+                TIME_WINDOWS_REUSED=self.time_windows_reused,
+                PRECONDITIONER=preconditioner_setup_str,
+                FILTER_TYPE=self.filter_type.value,
+                FILTER_LIMIT=self.filter_limit,
+                ACCELERATOR_SETUP_STRING=accelerator_setup_str,
             )
-        elif self.coupling_type == CouplingType.PARALLEL_IMPLICIT: 
+        elif self.coupling_type == CouplingType.PARALLEL_IMPLICIT:
             accelerator_string = """
         <acceleration:{ACCELERATOR_TYPE}>
           <data name="Displacement" mesh="FractureMeshTop"/> 
@@ -210,59 +253,56 @@ class TestCase:
           <filter type="{FILTER_TYPE}" limit="{FILTER_LIMIT}"/>
 
           {ACCELERATOR_SETUP_STRING}
-        </acceleration:{ACCELERATOR_TYPE}>""".format( 
-            ACCELERATOR_TYPE=self.accelerator.value, 
-            INITIAL_RELAXATION = self.initial_relaxation, 
-            TIME_WINDOWS_REUSED = self.time_windows_reused, 
-            PRECONDITIONER = preconditioner_setup_str,
-            FILTER_TYPE = self.filter_type.value, 
-            FILTER_LIMIT = self.filter_limit,
-            ACCELERATOR_SETUP_STRING = accelerator_setup_str
+        </acceleration:{ACCELERATOR_TYPE}>""".format(
+                ACCELERATOR_TYPE=self.accelerator.value,
+                INITIAL_RELAXATION=self.initial_relaxation,
+                TIME_WINDOWS_REUSED=self.time_windows_reused,
+                PRECONDITIONER=preconditioner_setup_str,
+                FILTER_TYPE=self.filter_type.value,
+                FILTER_LIMIT=self.filter_limit,
+                ACCELERATOR_SETUP_STRING=accelerator_setup_str,
             )
 
         return accelerator_string
-
-
 
     def get_config_footer(self):
         return """
       </coupling-scheme:{COUPLING_TYPE}>
 
   </solver-interface>
-</precice-configuration>""".format( COUPLING_TYPE = self.coupling_type.value )
+</precice-configuration>""".format(
+            COUPLING_TYPE=self.coupling_type.value
+        )
 
 
-def write_precice_configuration_file( testcase, filename, is_serial_coupling=True ):
+def write_precice_configuration_file(testcase, filename, is_serial_coupling=True):
 
-    #if (is_serial_coupling):
-    #    file_prefix = "serial-implicit-" 
-    #else:
+    # if (is_serial_coupling):
+    #    file_prefix = "serial-implicit-"
+    # else:
     #    file_prefix = "parallel-implicit-"
 
-
-    #if ( testcase.accelerator == AcceleratorType.IQN_ILS ):    
+    # if ( testcase.accelerator == AcceleratorType.IQN_ILS ):
     #    file_suffix = "ILS-TEMPLATE.xml"
-   #     fstr = open( "precice-config-ILS-TEMPLATE.xml", "r")
-    #elif (testcase.accelerator == AcceleratorType.IQN_IMVJ ):
+    #     fstr = open( "precice-config-ILS-TEMPLATE.xml", "r")
+    # elif (testcase.accelerator == AcceleratorType.IQN_IMVJ ):
     #    file_suffix = "IMVJ-TEMPLATE.xml"
-#        fstr = open( "precice-config-IMVJ-TEMPLATE.xml", "r")
-   # else:
+    #        fstr = open( "precice-config-IMVJ-TEMPLATE.xml", "r")
+    # else:
     #    raise "Could not find template for testcase: {}".format( testcase.accelerator )
 
-    #fstr = open( file_prefix + file_suffix, "r")
-    #lines = fstr.readlines()  
-    #fstr.close()
+    # fstr = open( file_prefix + file_suffix, "r")
+    # lines = fstr.readlines()
+    # fstr.close()
 
-    fstr = open( filename, "w" )
-    
-    fstr.write( testcase.get_config_header() )
-    fstr.write( testcase.set_up_acceleration() )
-    fstr.write( testcase.get_config_footer() )
-    
-    fstr.close()    
-    
+    fstr = open(filename, "w")
 
-def read_errors( testcase ):
+    fstr.write(testcase.get_config_header())
+    fstr.write(testcase.set_up_acceleration())
+    fstr.write(testcase.get_config_footer())
+
+    fstr.close()
+
+
+def read_errors(testcase):
     asdf = 0
-
-    
