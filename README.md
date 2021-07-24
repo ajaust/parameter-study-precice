@@ -1,2 +1,3 @@
-# parameter-study-precice
-Some scripts for easy generation of parameter studies for using preCICE
+# A tool for parameter studies using preCICE
+
+This script can be used for parameter studies using preCICE and some solvers.

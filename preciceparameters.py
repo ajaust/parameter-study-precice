@@ -1,5 +1,39 @@
 from enum import Enum
 
+class SolverMPIParameters():
+    def __init__(self, num_ranks: int, extra_options_list: list = None ):
+        self.num_ranks = num_ranks
+        self.extra_options_list = extra_options_list
+
+    def get_number_of_ranks(self) -> int:
+        return self.num_ranks
+
+    def get_extra_options_list(self) -> list:
+        return self.extra_options_list
+
+    def to_string(self) -> str:
+        return "MPI options:\n  Number of Ranks: {0}\n  Extra options: {1}".format( self.num_ranks, self.extra_options_list )
+
+class SolverParameters():
+
+    def __init__(self, name: str, executable_name: str, executable_path: str = "", mpi_parameters: SolverMPIParameters = None ):
+        self.name = name
+        self.executable_name = executable_name
+        self.executable_path = executable_path
+        self.mpi_parameters = mpi_parameters
+
+    def get_name(self) -> str:
+        return self.name
+
+    def get_executable_name(self) -> str:
+        return self.executable_name
+
+    def get_executable_path(self) -> str:
+        return executable_path
+
+    def to_string(self) -> str:
+        return "Solver: {0}\n  Executable: {1}\n  Executable path: {2}".format( self.name, self.executable_name, self.executable_path )
+
 
 class Error:
     def __init__(self, n_elements=-1):
