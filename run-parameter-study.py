@@ -145,13 +145,6 @@ def main():
         config.parameter_study_parameters
     )
 
-    compact_results_dir = "coupling_behavior_results"
-
-    try:
-        os.mkdir(compact_results_dir)
-    except:
-        print("Directory ", compact_results_dir, "exists already!")
-
     with open("timings.txt", "a+") as timings_file:
 
         timings_file.write("case,biot,flow\n")
@@ -204,6 +197,7 @@ def main():
 
         first_solver, *remaining_solvers = config.solvers
         # print(first_solver, remaining_solvers)
+
         # First solver we check on gets full timeout period. All other solver we check afterwards will
         # has 10 seconds of time to terminate before we kill it.
         solver_walltimes = wait_for_solver(
