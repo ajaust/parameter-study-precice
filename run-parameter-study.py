@@ -4,7 +4,7 @@ import preciceparameters as pp
 import subprocess as sp
 
 # from multiprocessing import Process, Queue
-import tempfile
+import itertools
 import os
 import signal
 import shutil
@@ -19,6 +19,15 @@ for k, dk in config.parameter_study_parameters.items():
         print(x)
         # whatever with k, x
 
+
+# https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
+def create_all_parameter_permutations( parameter_dict: dict ) -> dict:
+    keys, values = zip(*parameter_dict.items())
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+
+    print( "Created a list of {} parameter sets.".format( len(permutations_dicts) ) )
+
+    return permutations_dicts
 
 # import CouplingType as ct
 #
@@ -57,6 +66,8 @@ def get_filter_type(filter):
         return pp.FilterType.QR2
     else:
         raise "Wrong filter type specified!"
+
+print( create_all_parameter_permutations(config.parameter_study_parameters) )
 
 
 # IQN-ILS
@@ -152,7 +163,7 @@ def start_solver(solver_parameters: pp.SolverParameters):
             executable_path=solver_parameters.executable_path,
             executable_name=solver_parameters.executable_name,
         ),
-        *solver_cmd_line,
+        *solver_parameters.solver_cmd_line,
     ]
     print(*full_cmd_line)
     proc = sp.Popen(
