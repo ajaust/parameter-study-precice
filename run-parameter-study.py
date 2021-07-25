@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import preciceparameters as pp
+import internals.helperfunctions as helperfunctions
 import subprocess as sp
 
 # from multiprocessing import Process, Queue
@@ -13,15 +14,6 @@ from timeit import default_timer as timer
 
 import config
 
-def write_precice_configuration_file(testcase, filename, is_serial_coupling=True):
-
-    fstr = open(filename, "w")
-
-    fstr.write(testcase.get_config_header())
-    fstr.write(testcase.set_up_acceleration())
-    fstr.write(testcase.get_config_footer())
-
-    fstr.close()
 
 
 #for k, dk in config.parameter_study_parameters.items():
@@ -178,7 +170,7 @@ def main():
                 continue
 
         # Setup precice configpreexec_fn=os.setpgrp
-        pp.write_precice_configuration_file(
+        helperfunctions.write_precice_configuration_file(
             testcase, "precice-config.xml", is_serial_implicit
         )
 
