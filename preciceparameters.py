@@ -55,20 +55,17 @@ class SolverParameters(NamedTuple):
 
 
 class InterfaceQuasiNewtonMethod():
-
     def __init__(self, ignore_time_window_reuse=False):
         self.ignore_time_window_reuse = ignore_time_window_reuse
 
 class ILSAccelerator(internal.InterfaceQuasiNewtonMethod):
 
-    def __init__(self,  reuse: int):
-        self.reuse = reuse
 
     def __repr__(self):
-        return f"ILS"
+        return "ILS"
 
     def to_string(self) -> str:
-        return "Accelerator type: ILS\n  Reuse: {}".format( reuse )
+        return "Accelerator type: ILS"
 
 
 class IMVJRestartType(Enum):
@@ -77,6 +74,9 @@ class IMVJRestartType(Enum):
     RS_LS = "RS-LS"
     RS_SVD = "RS-SVD"
     RS_SLIDE = "RS-SLIDE"
+
+    def __repr__(self):
+        return f"{self.value}"
 
 class IMVJOptions(NamedTuple):
     type: IMVJRestartType=IMVJRestartType.RS_SVD
@@ -132,6 +132,9 @@ class CouplingType(Enum):
     SERIAL_IMPLICIT = "serial-implicit"
     PARALLEL_EXPLICIT = "parallel-explicit"
     PARALLEL_IMPLICIT = "parallel-implicit"
+
+    def __str__(self):
+        return f"{self.value}"
 
     def __repr__(self):
         return f"{self.value}"
