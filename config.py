@@ -5,17 +5,18 @@ solvers = [
         name="SolverA",
         executable_name="solver_a_executable",
         executable_path=".",
-        solver_cmd_line=["-c", "precice-config.xml"]
+        solver_cmd_line=["-c", "precice-config.xml"],
         mpi_parameters=None,
     ),
     pp.SolverParameters(
         name="SolverB",
         executable_name="solver_b_executable",
         executable_path=".",
-        solver_cmd_line=["-c", "precice-config.xml"]
+        solver_cmd_line=["-c", "precice-config.xml"],
         mpi_parameters=None,
     ),
 ]
+
 
 # Output files to move
 files_and_directories_to_move = [ "*.log", "precice-config.xml" ]

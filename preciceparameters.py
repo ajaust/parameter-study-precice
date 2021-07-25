@@ -20,7 +20,7 @@ class SolverParameters():
         self.name = name
         self.executable_name = executable_name
         self.executable_path = executable_path
-        self.solver_parameters = solver_parameters
+        self.solver_cmd_line = solver_cmd_line
         self.mpi_parameters = mpi_parameters
 
     def get_name(self) -> str:
@@ -37,31 +37,37 @@ class SolverParameters():
 
     def to_string(self) -> str:
         return "Solver: {0}\n  Executable: {1}\n  Executable path: {2}".format( self.name, self.executable_name, self.executable_path )
-
-
-class Error:
-    def __init__(self, n_elements=-1):
-        self.n_elements = n_elements
-        self.u = -1.0
-        self.sig = -1.0
-        self.lam = -1.0
-
-    def to_string(self):
-        return (
-            "(Elements: {0}, Error u: {1}, Error sigma: {2}, Error lambda: {3})".format(
-                self.n_elements, self.u, self.sig, self.lam
-            )
-        )
-
-
 class AcceleratorType(Enum):
     IQN_ILS = "IQN-ILS"
     IQN_IMVJ = "IQN-IMVJ"
+
+class ILSAccelerator():
+
+    def __init__(self,  reuse: int):
+        self.reuse = reuse
+
+    def to_string(self) -> str:
+        return "Accelerator type: ILS\n  Reuse: {}".format( reuse )
 
 
 class FilterType(Enum):
     QR1 = "QR1"
     QR2 = "QR2"
+
+class FilterSettings():
+
+    def __init__(self, filter_type: FilterType, filter_limit: float ):
+        self.filter_type = filter_type
+        self.filter_limit = filter_limit
+
+    def get_type(self) -> FilterType:
+        return self.filter_type
+
+    def get_limit(self) -> float:
+        return self.filter_limit
+
+    def to_string(self) -> str:
+        return "Filter type: {}, Filter Limit: {}".format( self.filter_type, self.filter_limit )
 
 
 class IMVJRestartMode(Enum):
