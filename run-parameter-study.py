@@ -13,11 +13,22 @@ from timeit import default_timer as timer
 
 import config
 
-for k, dk in config.parameter_study_parameters.items():
-    for x in dk:
-        # print( k, dk, x )
-        print(x)
-        # whatever with k, x
+def write_precice_configuration_file(testcase, filename, is_serial_coupling=True):
+
+    fstr = open(filename, "w")
+
+    fstr.write(testcase.get_config_header())
+    fstr.write(testcase.set_up_acceleration())
+    fstr.write(testcase.get_config_footer())
+
+    fstr.close()
+
+
+#for k, dk in config.parameter_study_parameters.items():
+#    for x in dk:
+#        # print( k, dk, x )
+#        print(x)
+#        # whatever with k, x
 
 
 # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
@@ -140,6 +151,8 @@ def main():
 
         print("Running testcase:")
         print(case)
+        #print( **case )
+        print( config.case_identifier.format( **case ))
         #print(testcase.to_string())
 
         try:
@@ -148,12 +161,12 @@ def main():
             print('no directory "precice-run/" to delete')
 
         # Save results
-        target_dir = key + "/"
+        target_dir = config.case_identifier.format( **case ) + "/"
 
         try:
             os.mkdir(target_dir)
         except:
-            print("Directory ", target_dir, "exists already!")
+            print("Directory ", target_dir, "exists already.")
 
             # Getting the file list of the directory
             dir = os.listdir(target_dir)
@@ -161,7 +174,7 @@ def main():
             if len(dir) == 0:
                 print("Empty directory! Rerurn simulation")
             else:
-                print("Skipping test case as directory is NOT empty!")
+                print("Skipping test case as directory is NOT empty.")
                 continue
 
         # Setup precice configpreexec_fn=os.setpgrp
