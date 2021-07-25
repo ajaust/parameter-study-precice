@@ -107,6 +107,7 @@ precice_config_template = """<?xml version="1.0" encoding="UTF-8" ?>
       <min-iteration-convergence-measure min-iterations="5" data="dataOne" mesh="MeshOne" />
       <exchange data="dataOne" mesh="MeshOne" from="SolverOne" to="SolverTwo" />
       <exchange data="dataTwo" mesh="MeshOne" from="SolverTwo" to="SolverOne" />
+
     </coupling-scheme:{COUPLINGTYPE}>
   </solver-interface>
 </precice-configuration>

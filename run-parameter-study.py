@@ -224,6 +224,7 @@ def main():
                 )
             )
 
+        # Move relevant files
         for f in config.files_and_directories_to_copy:
             copy_to_dir(target_dir, f)
 
