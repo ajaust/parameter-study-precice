@@ -15,25 +15,29 @@ from timeit import default_timer as timer
 import config
 
 
-
 # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
-def create_all_parameter_permutations( parameter_dict: dict ) -> dict:
+def create_all_parameter_permutations(parameter_dict: dict) -> dict:
     keys, values = zip(*parameter_dict.items())
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
-    print( "Found {} parameter sets.".format( len(permutations_dicts) ) )
+    print("Found {} parameter sets.".format(len(permutations_dicts)))
 
     for idx, permutation in enumerate(permutations_dicts):
         accelerator = permutation["ACCELERATORTYPE"]
-        if type(accelerator) is pp.IMVJAccelerator and accelerator.ignores_time_window_reuse():
+        if (
+            type(accelerator) is pp.IMVJAccelerator
+            and accelerator.ignores_time_window_reuse()
+        ):
             permutations_dicts[idx]["REUSEDTIMEWINDOWS"] = 0
 
     # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
-    permutations_dicts = [dict(t) for t in {tuple(d.items()) for d in permutations_dicts}]
-    print( "Found {} distinctive parameter sets.".format( len(permutations_dicts) ) )
-
+    permutations_dicts = [
+        dict(t) for t in {tuple(d.items()) for d in permutations_dicts}
+    ]
+    print("Found {} distinctive parameter sets.".format(len(permutations_dicts)))
 
     return permutations_dicts
+
 
 end_time = "25e-1"
 # end_time = "1e-5"
@@ -49,6 +53,7 @@ def get_filter_type(filter):
         return pp.FilterType.QR2
     else:
         raise "Wrong filter type specified!"
+
 
 def move_to_dir(target_dir, expr):
     for to_move in glob.glob(expr):
@@ -97,10 +102,12 @@ def start_solver(solver_parameters: pp.SolverParameters):
     return [proc, f]
 
 
-def wait_for_solver(solver, proc_and_fptr, solver_start_time, solver_walltimes, timeout):
+def wait_for_solver(
+    solver, proc_and_fptr, solver_start_time, solver_walltimes, timeout
+):
     print("Checking on {}".format(solver.name))
     proc, fptr = proc_and_fptr
-    #fptr = proc_and_fptr[1]
+    # fptr = proc_and_fptr[1]
     try:
         proc.wait(timeout=timeout)
         # biot_proc.wait(timeout=proc_timeout)
@@ -112,23 +119,31 @@ def wait_for_solver(solver, proc_and_fptr, solver_start_time, solver_walltimes, 
 
     return solver_walltimes
 
-def wait_for_solvers(solvers, process_ids, solver_start_times, solver_walltimes, timeout):
-    for solver in solvers:
-        solver_walltimes = wait_for_solver(solver, process_ids[solver.name], solver_start_times[solver.name], solver_walltimes, timeout)
-    return solver_walltimes
 
+def wait_for_solvers(
+    solvers, process_ids, solver_start_times, solver_walltimes, timeout
+):
+    for solver in solvers:
+        solver_walltimes = wait_for_solver(
+            solver,
+            process_ids[solver.name],
+            solver_start_times[solver.name],
+            solver_walltimes,
+            timeout,
+        )
+    return solver_walltimes
 
 
 def main():
 
-    configuration_generator = helperfunctions.PreciceConfigurationGenerator( config.precice_config_template )
+    configuration_generator = helperfunctions.PreciceConfigurationGenerator(
+        config.precice_config_template
+    )
 
-    #print( create_all_parameter_permutations(config.parameter_study_parameters) )
-    substitution_dict = create_all_parameter_permutations(config.parameter_study_parameters)
-
-
-
-
+    # print( create_all_parameter_permutations(config.parameter_study_parameters) )
+    substitution_dict = create_all_parameter_permutations(
+        config.parameter_study_parameters
+    )
 
     compact_results_dir = "coupling_behavior_results"
 
@@ -145,10 +160,10 @@ def main():
 
         print("Running testcase:")
         print(case)
-        #print( **case )
-        case_id = config.case_identifier.format( **case )
-        print( case_id )
-        #print(testcase.to_string())
+        # print( **case )
+        case_id = config.case_identifier.format(**case)
+        print(case_id)
+        # print(testcase.to_string())
 
         try:
             shutil.rmtree("precice-run/")
@@ -173,26 +188,38 @@ def main():
                 continue
 
         # Setup precice configpreexec_fn=os.setpgrp
-        configuration_generator.generate_configuration( "precice-config.xml", case )
-        #helperfunctions.write_precice_configuration_file(
+        configuration_generator.generate_configuration("precice-config.xml", case)
+        # helperfunctions.write_precice_configuration_file(
         #    testcase, "precice-config.xml", is_serial_implicit
-        #)
+        # )
 
         solver_start_times = {}
         solver_walltimes = {}
         solver_proc_and_file_ptr = {}
 
         for solver in config.solvers:
-            #print(solver)
+            # print(solver)
             solver_start_times[solver.name] = timer()
             solver_proc_and_file_ptr[solver.name] = start_solver(solver)
 
         first_solver, *remaining_solvers = config.solvers
-        #print(first_solver, remaining_solvers)
+        # print(first_solver, remaining_solvers)
         # First solver we check on gets full timeout period. All other solver we check afterwards will
         # has 10 seconds of time to terminate before we kill it.
-        solver_walltimes = wait_for_solver(first_solver, solver_proc_and_file_ptr[first_solver.name], solver_start_times[solver.name], solver_walltimes, config.run_timeout)
-        solver_walltimes = wait_for_solvers(remaining_solvers, solver_proc_and_file_ptr, solver_start_times, solver_walltimes, 10)
+        solver_walltimes = wait_for_solver(
+            first_solver,
+            solver_proc_and_file_ptr[first_solver.name],
+            solver_start_times[solver.name],
+            solver_walltimes,
+            config.run_timeout,
+        )
+        solver_walltimes = wait_for_solvers(
+            remaining_solvers,
+            solver_proc_and_file_ptr,
+            solver_start_times,
+            solver_walltimes,
+            10,
+        )
 
         with open("timings.txt", "a+") as timings_file:
             timings_file.write(

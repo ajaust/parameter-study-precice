@@ -1,4 +1,4 @@
-#import preciceparameters as pp
+# import preciceparameters as pp
 from preciceparameters import *
 
 solvers = [
@@ -21,29 +21,33 @@ solvers = [
 run_timeout = 1000
 
 # Output files to move
-files_and_directories_to_move = [ "*.log", "precice-config.xml" ]
+files_and_directories_to_move = ["*.log", "precice-config.xml"]
 # Files to copy
-files_and_directories_to_copy = [ ]
+files_and_directories_to_copy = []
 
 # Substitutions follow here as a map
 parameter_study_parameters = {
     "COUPLINGTYPE": [CouplingType.SERIAL_IMPLICIT],
     "ACCELERATORTYPE": [
         ILSAccelerator(),
-        IMVJAccelerator( IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=True ),
-        IMVJAccelerator( IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=False )
+        IMVJAccelerator(
+            IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=True
+        ),
+        IMVJAccelerator(
+            IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=False
+        ),
     ],
     "FILTERANDLIMIT": [
-        FilterSettings( FilterType.QR2, 1e-3 ),
-        FilterSettings( FilterType.QR2, 1e-4 ),
-        FilterSettings( FilterType.QR2, 1e-5 ),
-        FilterSettings( FilterType.QR1, 1e-3 ),
+        FilterSettings(FilterType.QR2, 1e-3),
+        FilterSettings(FilterType.QR2, 1e-4),
+        FilterSettings(FilterType.QR2, 1e-5),
+        FilterSettings(FilterType.QR1, 1e-3),
     ],
     "REUSEDTIMEWINDOWS": [0, 8],
     "INITIALRELAXATION": [0.1, 0.5],
 }
 
-case_identifier="{COUPLINGTYPE}-{ACCELERATORTYPE}-{FILTERANDLIMIT}-{REUSEDTIMEWINDOWS}-{INITIALRELAXATION}"
+case_identifier = "{COUPLINGTYPE}-{ACCELERATORTYPE}-{FILTERANDLIMIT}-{REUSEDTIMEWINDOWS}-{INITIALRELAXATION}"
 
 precice_config_template = """<?xml version="1.0" encoding="UTF-8" ?>
 <precice-configuration>

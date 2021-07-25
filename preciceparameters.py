@@ -3,8 +3,9 @@ from typing import NamedTuple
 
 import internals.datatypes as internal
 
-class SolverMPIParameters():
-    def __init__(self, num_ranks: int, extra_options_list: list = None ):
+
+class SolverMPIParameters:
+    def __init__(self, num_ranks: int, extra_options_list: list = None):
         self.num_ranks = num_ranks
         self.extra_options_list = extra_options_list
 
@@ -15,21 +16,23 @@ class SolverMPIParameters():
         return self.extra_options_list
 
     def to_string(self) -> str:
-        return "MPI options:\n  Number of Ranks: {0}\n  Extra options: {1}".format( self.num_ranks, self.extra_options_list )
-
+        return "MPI options:\n  Number of Ranks: {0}\n  Extra options: {1}".format(
+            self.num_ranks, self.extra_options_list
+        )
 
 
 class SolverParameters(NamedTuple):
     name: str
     executable_name: str
     executable_path: str = ""
-    solver_cmd_line: list=None
+    solver_cmd_line: list = None
     mpi_parameters: SolverMPIParameters = None
 
     def __str__(self):
         return f"Solver: {self.name}\n  Executable: {self.executable_name}\n  Executable path: {self.executable_path}\n  Solver command line: {self.solver_cmd_line}\n  MPI parameters: {self.mpi_parameters}"
 
-#class SolverParameters():
+
+# class SolverParameters():
 #
 #    def __init__(self, name: str, executable_name: str, executable_path: str = "", solver_cmd_line: list=None, mpi_parameters: SolverMPIParameters = None ):
 #        self.name = name
@@ -54,13 +57,12 @@ class SolverParameters(NamedTuple):
 #        return "Solver: {0}\n  Executable: {1}\n  Executable path: {2}".format( self.name, self.executable_name, self.executable_path )
 
 
-class InterfaceQuasiNewtonMethod():
+class InterfaceQuasiNewtonMethod:
     def __init__(self, ignore_time_window_reuse=False):
         self.ignore_time_window_reuse = ignore_time_window_reuse
 
+
 class ILSAccelerator(internal.InterfaceQuasiNewtonMethod):
-
-
     def __repr__(self):
         return "ILS"
 
@@ -78,27 +80,40 @@ class IMVJRestartType(Enum):
     def __repr__(self):
         return f"{self.value}"
 
+
 class IMVJOptions(NamedTuple):
-    type: IMVJRestartType=IMVJRestartType.RS_SVD
+    type: IMVJRestartType = IMVJRestartType.RS_SVD
     chunk_size: int = 8
     truncation_threshold: float = 1e-4
     reused_time_windows: int = 0
 
+
 #    def __repr__(self):
 #        return f""
 
-    #def __init__(self, type: IMVJRestartType=IMVJRestartType.RS_SVD, chunk_size: int = 8, truncation_threshold: float = 1e-4, reused_time_windows: int = 0 ):
-    #    self.type = type
-    #    self.chunk_size = chunk_size
-    #    self.truncation_threshold = truncation_threshold
-    #    self.reused_time_windows = reused_time_windows
+# def __init__(self, type: IMVJRestartType=IMVJRestartType.RS_SVD, chunk_size: int = 8, truncation_threshold: float = 1e-4, reused_time_windows: int = 0 ):
+#    self.type = type
+#    self.chunk_size = chunk_size
+#    self.truncation_threshold = truncation_threshold
+#    self.reused_time_windows = reused_time_windows
 
 
 class IMVJAccelerator(internal.InterfaceQuasiNewtonMethod):
-
-    def __init__(self, type: IMVJRestartType=IMVJRestartType.RS_SVD, chunk_size: int = 8, truncation_threshold: float = 1e-4, reused_time_windows: int = 0, ignore_time_window_reuse: bool=True):
+    def __init__(
+        self,
+        type: IMVJRestartType = IMVJRestartType.RS_SVD,
+        chunk_size: int = 8,
+        truncation_threshold: float = 1e-4,
+        reused_time_windows: int = 0,
+        ignore_time_window_reuse: bool = True,
+    ):
         super().__init__(ignore_time_window_reuse)
-        self.options = IMVJOptions( type=type, chunk_size=chunk_size, truncation_threshold=truncation_threshold, reused_time_windows=reused_time_windows )
+        self.options = IMVJOptions(
+            type=type,
+            chunk_size=chunk_size,
+            truncation_threshold=truncation_threshold,
+            reused_time_windows=reused_time_windows,
+        )
 
     def get_options(self):
         return self.options
@@ -111,9 +126,9 @@ class FilterType(Enum):
     QR1 = "QR1"
     QR2 = "QR2"
 
-class FilterSettings():
 
-    def __init__(self, filter_type: FilterType, filter_limit: float ):
+class FilterSettings:
+    def __init__(self, filter_type: FilterType, filter_limit: float):
         self.filter_type = filter_type
         self.filter_limit = filter_limit
 
@@ -127,7 +142,9 @@ class FilterSettings():
         return f"{self.filter_type.value}-{self.filter_limit:1.2E}"
 
     def to_string(self) -> str:
-        return "Filter type: {}, Filter Limit: {}".format( self.filter_type, self.filter_limit )
+        return "Filter type: {}, Filter Limit: {}".format(
+            self.filter_type, self.filter_limit
+        )
 
 
 class CouplingType(Enum):
@@ -143,7 +160,7 @@ class CouplingType(Enum):
         return f"{self.value}"
 
 
-#class TestCase:
+# class TestCase:
 #    def __init__(
 #        self,
 #        name,
@@ -192,7 +209,7 @@ class CouplingType(Enum):
 #    def get_config_header(self):
 #        return """<?xml version="1.0"?>
 #
-#<precice-configuration>
+# <precice-configuration>
 #  <log>
 #    <sink type="stream" output="stdout"  filter= "(%Severity% > debug) or (%Severity% >= trace and %Module% contains SolverInterfaceImpl)"  enabled="false" />
 #    <sink type="stream" output="stdout"  enabled="false" />
@@ -366,12 +383,12 @@ class CouplingType(Enum):
 #      </coupling-scheme:{COUPLING_TYPE}>
 #
 #  </solver-interface>
-#</precice-configuration>""".format(
+# </precice-configuration>""".format(
 #            COUPLING_TYPE=self.coupling_type.value
 #        )
 #
 #
-#def write_precice_configuration_file(testcase, filename, is_serial_coupling=True):
+# def write_precice_configuration_file(testcase, filename, is_serial_coupling=True):
 #
 #    # if (is_serial_coupling):
 #    #    file_prefix = "serial-implicit-"
