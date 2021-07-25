@@ -26,7 +26,7 @@ class SolverParameters(NamedTuple):
     solver_cmd_line: list=None
     mpi_parameters: SolverMPIParameters = None
 
-    def __repr__(self):
+    def __str__(self):
         return f"Solver: {self.name}\n  Executable: {self.executable_name}\n  Executable path: {self.executable_path}\n  Solver command line: {self.solver_cmd_line}\n  MPI parameters: {self.mpi_parameters}"
 
 #class SolverParameters():
@@ -100,8 +100,11 @@ class IMVJAccelerator(internal.InterfaceQuasiNewtonMethod):
         super().__init__(ignore_time_window_reuse)
         self.options = IMVJOptions( type=type, chunk_size=chunk_size, truncation_threshold=truncation_threshold, reused_time_windows=reused_time_windows )
 
-    def __repr__(self):
-        return f"{self.options.type.value}"
+    def get_options(self):
+        return self.options
+
+    def __str__(self):
+        return f"{self.options.type.value}-{self.options.chunk_size}-{self.options.truncation_threshold}-{self.options.reused_time_windows}"
 
 
 class FilterType(Enum):
@@ -121,7 +124,7 @@ class FilterSettings():
         return self.filter_limit
 
     def __repr__(self):
-        return f"{self.filter_type.value}-{self.filter_limit}"
+        return f"{self.filter_type.value}-{self.filter_limit:1.2E}"
 
     def to_string(self) -> str:
         return "Filter type: {}, Filter Limit: {}".format( self.filter_type, self.filter_limit )

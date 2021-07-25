@@ -16,27 +16,24 @@ import config
 
 
 
-#for k, dk in config.parameter_study_parameters.items():
-#    for x in dk:
-#        # print( k, dk, x )
-#        print(x)
-#        # whatever with k, x
-
-
 # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
 def create_all_parameter_permutations( parameter_dict: dict ) -> dict:
     keys, values = zip(*parameter_dict.items())
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
-    print( "Created a list of {} parameter sets.".format( len(permutations_dicts) ) )
+    print( "Found {} parameter sets.".format( len(permutations_dicts) ) )
+
+    for idx, permutation in enumerate(permutations_dicts):
+        accelerator = permutation["ACCELERATORTYPE"]
+        if type(accelerator) is pp.IMVJAccelerator and accelerator.ignores_time_window_reuse():
+            permutations_dicts[idx]["REUSEDTIMEWINDOWS"] = 0
+
+    # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
+    permutations_dicts = [dict(t) for t in {tuple(d.items()) for d in permutations_dicts}]
+    print( "Found {} distinctive parameter sets.".format( len(permutations_dicts) ) )
+
 
     return permutations_dicts
-
-# import CouplingType as ct
-#
-# Set up test cases
-
-testcases = {}
 
 end_time = "25e-1"
 # end_time = "1e-5"
@@ -72,9 +69,9 @@ def copy_to_dir(target_dir, expr):
 
 
 def start_solver(solver_parameters: pp.SolverParameters):
-    print("Starting {}".format(solver_parameters.get_name()))
+    print("Starting {}".format(solver_parameters.name))
 
-    f = open("{}.log".format(solver.get_name()), "w")
+    f = open("{}.log".format(solver_parameters.name), "w")
 
     mpi_params = []
     if solver_parameters.mpi_parameters != None:
@@ -100,31 +97,37 @@ def start_solver(solver_parameters: pp.SolverParameters):
     return [proc, f]
 
 
-def wait_for_solver(solver, solver_walltimes, timeout):
-    print("Checking on {}".format(solver.get_name()))
-    proc = solver_proc_and_file_ptr[solver][0]
+def wait_for_solver(solver, proc_and_fptr, solver_start_time, solver_walltimes, timeout):
+    print("Checking on {}".format(solver.name))
+    proc, fptr = proc_and_fptr
+    #fptr = proc_and_fptr[1]
     try:
         proc.wait(timeout=timeout)
         # biot_proc.wait(timeout=proc_timeout)
     except sp.TimeoutExpired:
         os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
 
-    solver_walltimes[solver.get_name()] = timer() - solver_start_times[solver]
+    solver_walltimes[solver.name] = timer() - solver_start_time
+    fptr.close()
 
     return solver_walltimes
 
-def wait_for_solvers(solvers, solver_walltimes, timeout):
+def wait_for_solvers(solvers, process_ids, solver_start_times, solver_walltimes, timeout):
     for solver in solvers:
-        solver_walltimes = wait_for_solver(solver, solver_walltimes, timeout)
+        solver_walltimes = wait_for_solver(solver, process_ids[solver.name], solver_start_times[solver.name], solver_walltimes, timeout)
     return solver_walltimes
 
 
 
 def main():
 
+    configuration_generator = helperfunctions.PreciceConfigurationGenerator( config.precice_config_template )
+
     #print( create_all_parameter_permutations(config.parameter_study_parameters) )
     substitution_dict = create_all_parameter_permutations(config.parameter_study_parameters)
-    print("Number of test configurations to run: \n {}".format(len(testcases)))
+
+
+
 
 
     compact_results_dir = "coupling_behavior_results"
@@ -139,12 +142,12 @@ def main():
         timings_file.write("case,biot,flow\n")
 
     for case in substitution_dict:
-        #testcase = testcases[key]
 
         print("Running testcase:")
         print(case)
         #print( **case )
-        print( config.case_identifier.format( **case ))
+        case_id = config.case_identifier.format( **case )
+        print( case_id )
         #print(testcase.to_string())
 
         try:
@@ -153,7 +156,7 @@ def main():
             print('no directory "precice-run/" to delete')
 
         # Save results
-        target_dir = config.case_identifier.format( **case ) + "/"
+        target_dir = case_id + "/"
 
         try:
             os.mkdir(target_dir)
@@ -170,30 +173,31 @@ def main():
                 continue
 
         # Setup precice configpreexec_fn=os.setpgrp
-        helperfunctions.write_precice_configuration_file(
-            testcase, "precice-config.xml", is_serial_implicit
-        )
+        configuration_generator.generate_configuration( "precice-config.xml", case )
+        #helperfunctions.write_precice_configuration_file(
+        #    testcase, "precice-config.xml", is_serial_implicit
+        #)
 
         solver_start_times = {}
         solver_walltimes = {}
         solver_proc_and_file_ptr = {}
 
         for solver in config.solvers:
-            print(solver.get_name())
-            solver_start_times[solver] = timer()
-            solver_proc_and_file_ptr[solver] = start_solver(solver)
+            #print(solver)
+            solver_start_times[solver.name] = timer()
+            solver_proc_and_file_ptr[solver.name] = start_solver(solver)
 
         first_solver, *remaining_solvers = config.solvers
-        print(first_solver, remaining_solvers)
+        #print(first_solver, remaining_solvers)
         # First solver we check on gets full timeout period. All other solver we check afterwards will
         # has 10 seconds of time to terminate before we kill it.
-        solver_walltimes = wait_for_solver(first_solver, solver_walltimes, config.run_timeout)
-        solver_walltimes = wait_for_solvers(remaining_solvers, solver_walltimes, 10)
+        solver_walltimes = wait_for_solver(first_solver, solver_proc_and_file_ptr[first_solver.name], solver_start_times[solver.name], solver_walltimes, config.run_timeout)
+        solver_walltimes = wait_for_solvers(remaining_solvers, solver_proc_and_file_ptr, solver_start_times, solver_walltimes, 10)
 
         with open("timings.txt", "a+") as timings_file:
             timings_file.write(
                 "{case},{min},{max}\n".format(
-                    case=key,
+                    case=case_id,
                     min=min(solver_walltimes.values()),
                     max=max(solver_walltimes.values()),
                 )

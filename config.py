@@ -1,14 +1,15 @@
-import preciceparameters as pp
+#import preciceparameters as pp
+from preciceparameters import *
 
 solvers = [
-    pp.SolverParameters(
+    SolverParameters(
         name="SolverA",
         executable_name="solver_a_executable",
         executable_path=".",
         solver_cmd_line=["-c", "precice-config.xml"],
         mpi_parameters=None,
     ),
-    pp.SolverParameters(
+    SolverParameters(
         name="SolverB",
         executable_name="solver_b_executable",
         executable_path=".",
@@ -26,18 +27,23 @@ files_and_directories_to_copy = [ ]
 
 # Substitutions follow here as a map
 parameter_study_parameters = {
-    "COUPLINGTYPE": [pp.CouplingType.SERIAL_IMPLICIT],
-    "ACCELERATORTYPE": [pp.ILSAccelerator(), pp.IMVJAccelerator( pp.IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=True )],
-    "FILTERANDLIMIT": [
-        pp.FilterSettings( pp.FilterType.QR2, 1e-3 ),
-        pp.FilterSettings( pp.FilterType.QR2, 1e-4 ),
-        pp.FilterSettings( pp.FilterType.QR2, 1e-5 ),
-        pp.FilterSettings( pp.FilterType.QR1, 1e-3 ),
+    "COUPLINGTYPE": [CouplingType.SERIAL_IMPLICIT],
+    "ACCELERATORTYPE": [
+        ILSAccelerator(),
+        IMVJAccelerator( IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=True ),
+        IMVJAccelerator( IMVJRestartType.RS_SVD, 8, 1e-3, 0, ignore_time_window_reuse=False )
     ],
+    "FILTERANDLIMIT": [
+        FilterSettings( FilterType.QR2, 1e-3 ),
+        FilterSettings( FilterType.QR2, 1e-4 ),
+        FilterSettings( FilterType.QR2, 1e-5 ),
+        FilterSettings( FilterType.QR1, 1e-3 ),
+    ],
+    "REUSEDTIMEWINDOWS": [0, 8],
     "INITIALRELAXATION": [0.1, 0.5],
 }
 
-case_identifier="{COUPLINGTYPE}-{ACCELERATORTYPE}-{FILTERANDLIMIT}-{INITIALRELAXATION}"
+case_identifier="{COUPLINGTYPE}-{ACCELERATORTYPE}-{FILTERANDLIMIT}-{REUSEDTIMEWINDOWS}-{INITIALRELAXATION}"
 
 precice_config_template = """<?xml version="1.0" encoding="UTF-8" ?>
 <precice-configuration>
@@ -89,7 +95,7 @@ precice_config_template = """<?xml version="1.0" encoding="UTF-8" ?>
 
     <m2n:sockets from="SolverOne" to="SolverTwo" />
 
-    <coupling-scheme:serial-implicit>
+    <coupling-scheme:{COUPLINGTYPE}>
       <participants first="SolverOne" second="SolverTwo" />
       <max-time-windows value="2" />
       <time-window-size value="1.0" />
@@ -97,7 +103,7 @@ precice_config_template = """<?xml version="1.0" encoding="UTF-8" ?>
       <min-iteration-convergence-measure min-iterations="5" data="dataOne" mesh="MeshOne" />
       <exchange data="dataOne" mesh="MeshOne" from="SolverOne" to="SolverTwo" />
       <exchange data="dataTwo" mesh="MeshOne" from="SolverTwo" to="SolverOne" />
-    </coupling-scheme:serial-implicit>
+    </coupling-scheme:{COUPLINGTYPE}>
   </solver-interface>
 </precice-configuration>
 """
